@@ -1,23 +1,23 @@
-
 //define Libraries
+
 #include <ESP8266WiFi.h>
 #include <aREST.h>
 #include <aREST_UI.h>
 #include "PietteTech_DHT.h" //DHT sensor lib
 
-
-#include <WebConfig.h> 
-
-
-
 //-------------------------------
 // defines for DHT lib
 #define DHTTYPE  DHT11           // Sensor type DHT11/21/22/AM2301/AM2302
-#define DHTPIN   9              // Digital pin for communications
-#define REPORT_INTERVAL 5000    // in msec must > 2000
+#define DHTPIN   4              // Digital pin for communications
+#define REPORT_INTERVAL 10000    // in msec must > 2000
+// The port to listen for incoming TCP connections
+#define LISTEN_PORT           80
 
 //-------------------------------
 //define constants
+// WiFi parameters
+const char* ssid = "Delphi_Guests";
+const char* password = "tofave12";
 
 
 //-------------------------------
@@ -29,6 +29,9 @@ float t, h, d;
 int acquireresult;
 int acquirestatus;
 bool bDHTstarted;       // flag to indicate we started acquisition
+int thAverageVar = 0; //divider for get average T and H during period of time
+float tempT, tempH, aT, aH = 0;
+
 
 //------------------------------
 //Functions declaration
@@ -45,22 +48,10 @@ void getTemperature();
 
 // Lib instantiate
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
-
-//WebConfig* pWebConfig; 
-
-//aREST_UI rest = aREST_UI();
-
-
-// WiFi parameters
-//const char* ssid = "Delphi_Guests";
-//const char* password = "tofave12";
-
-// The port to listen for incoming TCP connections
-//#define LISTEN_PORT           80
-
 // Create an instance of the server
-//WiFiServer server(LISTEN_PORT);
-
+WiFiServer server(LISTEN_PORT);
+// Create aREST instance
+aREST_UI rest = aREST_UI();
 
 // This wrapper is in charge of calling must be defined like this for the lib work
 void dht_wrapper() {
@@ -73,12 +64,10 @@ void dht_wrapper() {
 void setup()
 {
   Serial.begin(115200); 
-    
-  //pWebConfig = new WebConfig("BASIC WEBCONFIG v1.0", "ESP8266", "8266", false);
-  /*Serial.println("");
-  Serial.print ("IP address: ");
-  Serial.println(WiFi.localIP());
-*/
+  
+  //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
+  
+
 
   startMills = millis();
   
@@ -98,79 +87,68 @@ void setup()
     t = h = d = 0;
   }
   
+  // Set the title
+  rest.title("Test Page");
+  // Init variables and expose them to REST API
 
-  //rest.title("Test page");
+  rest.variable("Temperature", &aT);
+  rest.variable("Humidity", &aH);
 
-  // // Labels
-  //rest.label("temperature");
-  //rest.label("humidity");
+   // Labels
+  rest.label("Temperature");
+  rest.label("Humidity");
 
-  ////Give name and ID to device
-  //rest.set_id("1");
-  //rest.set_name("esp8266");
+   // Give name and ID to device
+  rest.set_id("1");
+  rest.set_name("esp8266");
 
-  //// Connect to WiFi
-  //WiFi.begin(ssid, password);
-  //while (WiFi.status() != WL_CONNECTED) {
-	 // delay(500);
-	 // Serial.print(".");
-  //}
-  //Serial.println("");
-  //Serial.println("WiFi connected");
 
-  // // Start the server
-  //server.begin();
-  //Serial.println("Server started");
+  WiFi.begin(ssid,password);
+ // Serial.println (WiFi.localIP()); // not using becouse didn't get connected status while was connected to network
+  /*while (WiFi.localIP() == "0.0.0.0"){
+	  delay(500);
+	  (WiFi.printDiag(Serial));
 
-  //// Print the IP address
-  //Serial.println(WiFi.localIP());
-
+	  Serial.println(".");
+	  Serial.println(WiFi.status());
+	  Serial.println(" ");
+  }*/
   
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println(WiFi.localIP());
+  
+  // Start the server
+  server.begin();
+  Serial.println("Server started");
 }
 
 void loop()
 {
-  //pWebConfig->ProcessHTTP();
-  //yield();
   
-  // Handle REST calls
-	/*WiFiClient client = server.available();
-	if (!client) {
-		return;
-	}
-	while (!client.available()) {
-		delay(1);
-	}*/
-
+  
   getTemperature();
 
-  //sendRequest((int)t);
- /* 
-  rest.variable("temperature", &t);
-  rest.variable("humidity", &h);
+  
+  
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+  while (!client.available()) {
+    delay(1);
+  }
+
 
   rest.handle(client);
-*/
-  delay(5000);
+ 
  
 }
 
-//send request function
-//
-//void sendRequest(int data){
-//
-//  client.connect(host, httpPort);
-//  
-//  request = "GET " + url + data + isWriteToDB + "HTTP/1.1\r\nHost: " + host + "\r\n\r\n";
-//  Serial.println ("Sending request");
-//  Serial.println (request);
-//  
-//  client.print (request);
-//}
+
 
 // Get temperature function
 void getTemperature(){
-  
   
    if (bDHTstarted) {
     acquirestatus = DHT.acquiring();
@@ -184,22 +162,37 @@ void getTemperature(){
       bDHTstarted = false;
     }
   }
+   //collecting data for getting average T and H
+   tempT = tempT + t;
+   tempH = tempH + h;
+   thAverageVar ++;
+
 
   if ((millis() - startMills) > REPORT_INTERVAL) {
 
+	  //getting avarage T and H
+	  aT = tempT/thAverageVar;
+	  aH = tempH/thAverageVar;
+	  Serial.print("Amounts of measurement: ");
+	  Serial.println(thAverageVar);
+
       Serial.print("Humidity (%): ");
-      Serial.println(h);
+	  Serial.println(aH);
 
 
       Serial.print("Temperature (oC): ");
-      Serial.println(t);
+	  Serial.println(aT);
 	
-
+	  //setting all tem vars to 0
       startMills = millis();
+	  tempT = 0;
+	  tempH = 0;
+	  thAverageVar = 0;
 
     // to remove lock
     if (acquirestatus == 1) {
       DHT.reset();
+	  thAverageVar = 0;
     }
 
     if (!bDHTstarted) {
