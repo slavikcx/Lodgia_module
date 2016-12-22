@@ -1,20 +1,23 @@
+
 //define Libraries
-#include <EEPROM.h>
 #include <ESP8266WiFi.h>
+#include <aREST.h>
+#include <aREST_UI.h>
+#include "PietteTech_DHT.h" //DHT sensor lib
+
+
 #include <WebConfig.h> 
 
-#include "PietteTech_DHT.h" //DHT sensor lib
+
 
 //-------------------------------
 // defines for DHT lib
 #define DHTTYPE  DHT11           // Sensor type DHT11/21/22/AM2301/AM2302
-#define DHTPIN   4              // Digital pin for communications
+#define DHTPIN   9              // Digital pin for communications
 #define REPORT_INTERVAL 5000    // in msec must > 2000
 
 //-------------------------------
 //define constants
-const int eepromTempAddress = 0;
-const int eepromHumidityAddress = 1;
 
 
 //-------------------------------
@@ -43,7 +46,20 @@ void getTemperature();
 // Lib instantiate
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
 
-WebConfig* pWebConfig; 
+//WebConfig* pWebConfig; 
+
+//aREST_UI rest = aREST_UI();
+
+
+// WiFi parameters
+//const char* ssid = "Delphi_Guests";
+//const char* password = "tofave12";
+
+// The port to listen for incoming TCP connections
+//#define LISTEN_PORT           80
+
+// Create an instance of the server
+//WiFiServer server(LISTEN_PORT);
 
 
 // This wrapper is in charge of calling must be defined like this for the lib work
@@ -58,11 +74,11 @@ void setup()
 {
   Serial.begin(115200); 
     
-  pWebConfig = new WebConfig("BASIC WEBCONFIG v1.0", "ESP8266", "8266", false);
-  Serial.println("");
+  //pWebConfig = new WebConfig("BASIC WEBCONFIG v1.0", "ESP8266", "8266", false);
+  /*Serial.println("");
   Serial.print ("IP address: ");
   Serial.println(WiFi.localIP());
-
+*/
 
   startMills = millis();
   
@@ -83,18 +99,58 @@ void setup()
   }
   
 
+  //rest.title("Test page");
+
+  // // Labels
+  //rest.label("temperature");
+  //rest.label("humidity");
+
+  ////Give name and ID to device
+  //rest.set_id("1");
+  //rest.set_name("esp8266");
+
+  //// Connect to WiFi
+  //WiFi.begin(ssid, password);
+  //while (WiFi.status() != WL_CONNECTED) {
+	 // delay(500);
+	 // Serial.print(".");
+  //}
+  //Serial.println("");
+  //Serial.println("WiFi connected");
+
+  // // Start the server
+  //server.begin();
+  //Serial.println("Server started");
+
+  //// Print the IP address
+  //Serial.println(WiFi.localIP());
+
   
 }
 
 void loop()
 {
-  pWebConfig->ProcessHTTP();
-  yield();
+  //pWebConfig->ProcessHTTP();
+  //yield();
   
+  // Handle REST calls
+	/*WiFiClient client = server.available();
+	if (!client) {
+		return;
+	}
+	while (!client.available()) {
+		delay(1);
+	}*/
+
   getTemperature();
 
   //sendRequest((int)t);
-  
+ /* 
+  rest.variable("temperature", &t);
+  rest.variable("humidity", &h);
+
+  rest.handle(client);
+*/
   delay(5000);
  
 }
