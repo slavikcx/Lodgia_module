@@ -13,11 +13,22 @@
 // The port to listen for incoming TCP connections
 #define LISTEN_PORT           80
 
+
+
 //-------------------------------
 //define constants
 // WiFi parameters
 const char* ssid = "Delphi_Guests";
 const char* password = "tofave12";
+
+//const char* ssid = "SlavaWIFI";
+//const char* password = "ZXCde3_vgy765_1234567890_vvv";
+
+//Time server 
+const char* timeServerHost = "ntp.time.in.ua";
+//const char* timeServerHost = "utcnist.colorado.edu";
+//const char* timeServerHost = "utcnist2.colorado.edu";
+const int timeServerHttpPort = 13;
 
 
 //-------------------------------
@@ -33,6 +44,8 @@ int thAverageVar = 0; //divider for get average T and H during period of time
 float tempT, tempH, aT, aH = 0;
 
 
+String dateTime = "";
+
 //------------------------------
 //Functions declaration
 
@@ -41,6 +54,7 @@ void dht_wrapper(); // must be declared before the lib initialization
 
 //User functions
 void getTemperature();
+String getTime();
 
 
 
@@ -50,6 +64,8 @@ void getTemperature();
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
 // Create an instance of the server
 WiFiServer server(LISTEN_PORT);
+
+
 // Create aREST instance
 aREST_UI rest = aREST_UI();
 
@@ -67,8 +83,6 @@ void setup()
   
   //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
   
-
-
   startMills = millis();
   
   // delay 2 sec before start acquire DHT
@@ -90,11 +104,13 @@ void setup()
   // Set the title
   rest.title("Test Page");
   // Init variables and expose them to REST API
-
+ 
+  rest.variable("Date_and_Time", &dateTime);
   rest.variable("Temperature", &aT);
   rest.variable("Humidity", &aH);
 
    // Labels
+  rest.label("Date_and_Time");
   rest.label("Temperature");
   rest.label("Humidity");
 
@@ -121,27 +137,29 @@ void setup()
   // Start the server
   server.begin();
   Serial.println("Server started");
+
+  Serial.println(dateTime);
 }
 
 void loop()
 {
   
-  
-  getTemperature();
+	getTemperature();
 
-  
-  
-  WiFiClient client = server.available();
+	//Serial.println("before client");
+	WiFiClient client = server.available();
   if (!client) {
     return;
   }
+
+  //Serial.println("before client available");
   while (!client.available()) {
     delay(1);
   }
 
-
+  
+  
   rest.handle(client);
- 
  
 }
 
@@ -170,6 +188,9 @@ void getTemperature(){
 
   if ((millis() - startMills) > REPORT_INTERVAL) {
 
+	  //getting time
+	  getTime();
+	 
 	  //getting avarage T and H
 	  aT = tempT/thAverageVar;
 	  aH = tempH/thAverageVar;
@@ -203,5 +224,35 @@ void getTemperature(){
   }
 
 }
+// 
+String getTime(){
+	
+	
+	WiFiClient client;
+	String datetime = " ";
+	Serial.print("connecting to ");
+	Serial.println(timeServerHost);
+	if (!client.connect(timeServerHost, timeServerHttpPort)) {
+		Serial.println("Time server connection failed");
+	}
 
+	//Serial.println("SEND REQUEST");
+	client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMcu Lua;)\r\n\r\n");
 
+	delay(100);
+
+	while(client.available())
+  {
+    String line = client.readStringUntil('\r');
+
+      //Parsing date time from server responce
+      dateTime = line.substring(0, 11); // getting date
+	  dateTime += line.substring(20, 25); //getting year
+	  dateTime += line.substring(10, 20); // getting time
+           
+      Serial.println(dateTime);
+  	
+	  return dateTime;
+	
+	}
+}
