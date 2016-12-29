@@ -52,8 +52,7 @@ C:\Users\vyacheslavc\AppData\Local\Temp\VMBuilds\ESP8266_Lodjia_Module\esp8266_g
  C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Server.h \
  C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/WiFiClientSecure.h \
  C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/include/ssl.h \
- D:\Slava\OneDrive\Arduino\projects\libraries\aREST-master/aREST.h \
- C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/stdlib_noniso.h \
- D:\Slava\OneDrive\Arduino\projects\libraries\aREST_UI-master/aREST_UI.h \
+ C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WebServer\src/ESP8266WebServer.h \
+ C:\Users\vyacheslavc\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WebServer\src/detail/RequestHandler.h \
  D:\Slava\OneDrive\Arduino\projects\libraries\PietteTech_DHT-8266-master/PietteTech_DHT.h \
  C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\ 11.0\Common7\IDE\Extensions\3v3wxtxi.ara\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h

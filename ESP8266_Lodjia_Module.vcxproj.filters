@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ESP8266_Lodjia_Module.ino" />
+    <None Include="data\index.htm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.ESP8266_Lodjia_Module.vsarduino.h">

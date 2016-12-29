@@ -13,7 +13,7 @@
 #define DHTPIN   4              // Digital pin for communications
 #define REPORT_INTERVAL 10000    // in msec must > 2000
 // The port to listen for incoming TCP connections
-#define LISTEN_PORT           8080 // WiFI Server listen port
+#define LISTEN_PORT           8080
 
 
 
@@ -28,6 +28,8 @@ const char* password = "tofave12";
 
 //Time server 
 const char* timeServerHost = "ntp.time.in.ua";
+//const char* timeServerHost = "utcnist.colorado.edu";
+//const char* timeServerHost = "utcnist2.colorado.edu";
 const int timeServerHttpPort = 13;
 
 //const int relayPin = 13;
@@ -45,14 +47,10 @@ bool bDHTstarted;       // flag to indicate we started acquisition
 int thAverageVar = 0; //divider for get average T and H during period of time
 float tempT, tempH, aT, aH = 0;
 
+//String saT = ""; 
+//String saH = "";
 String dateTime = "";
 String webPage = "";
-
-bool isrelayOn = false;
-
-//Define pins
-int relayPin = 5; // relay pin
-
 
 //------------------------------
 //Functions declaration
@@ -60,18 +58,14 @@ int relayPin = 5; // relay pin
 //Libs functions
 void dht_wrapper(); // must be declared before the lib initialization
 
-// Init functions
-void dhtInit ();
-void webServerInit(void);
-
 //User functions
 void getTemperature();
 String getTime();
 //String toString (float data);
 String buildWebPage();
-void handle_root();
-void handle_relayOn();
-void handle_relayOff();
+
+
+
 
 
 //------------------------------
@@ -79,9 +73,19 @@ void handle_relayOff();
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
 // Create an instance of the server
 WiFiServer server(LISTEN_PORT);
-//Creating webServer instance with listening of port 80
+
 ESP8266WebServer webServer(80);
 
+
+
+// -Create aREST instance
+//-aREST_UI rest_ui = aREST_UI();
+
+
+// This wrapper is in charge of calling must be defined like this for the lib work
+void dht_wrapper() {
+  DHT.isrCallback();
+}
 
 
 //------------------------------
@@ -89,10 +93,33 @@ ESP8266WebServer webServer(80);
 void setup()
 {
   Serial.begin(115200); 
-  //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
+  
   Serial.println("Starting....");
  
-  void dhtInit ();
+
+  //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
+  
+  startMills = millis();
+  
+  // delay 2 sec before start acquire DHT
+  while ( (millis() - startMills) < 2000 ) {
+    yield();
+  }
+
+// blocking method for DHT
+  acquirestatus = 0;
+  acquireresult = DHT.acquireAndWait(1000);
+  if ( acquireresult == 0 ) {
+    t = DHT.getCelsius();
+    h = DHT.getHumidity();
+    d = DHT.getDewPoint();
+  } else {
+    t = h = d = 0;
+  }
+  
+  //- Give name and ID to device
+  //-rest_ui.set_id("1");
+  //-rest_ui.set_name("esp8266");
 
   WiFi.begin(ssid,password);
  // Serial.println (WiFi.localIP()); // not using becouse didn't get connected status while was connected to network
@@ -109,23 +136,45 @@ void setup()
   Serial.println("WiFi connected");
   Serial.println(WiFi.localIP());
   
-  // Start WiFI server
+  // Start the server
   server.begin();
   Serial.println("Server started");
-  
-  // init and start Web server
-  webServerInit();
 
-  pinMode(relayPin, OUTPUT); // setting relay pin to output
-  
+  //- Set the title
+  //-rest_ui.title("Test Page");
+  //- Init variables and expose them torest_uiAPI
+ 
+  //-rest_ui.variable("Date_and_Time", &dateTime);
+  //-rest_ui.variable("Temperature", &aT);
+  //-rest_ui.variable("Humidity", &aH);
+
+   //- Labels & buttons
+  //-rest_ui.label("Date_and_Time");
+  //-rest_ui.label("Temperature");
+  //-rest_ui.label("Humidity");
+
+
+  //-rest_ui.button.name("Relay Control");
+  //-rest_ui.button(13);
+
+ //webPage += "<h1>ESP8266 Web Server</h1><p>Socket #1 <a href=\"socket1On\"><button>ON</button></a>&nbsp;<a href=\"socket1Off\"><button>OFF</button></a></p>";
+
+  //webServer.on("/", [](){ webServer.send(200, "text/html", webPage);});
+
+  webServerInit();
+  //webServer.begin();
+  //Serial.println("HTTP server started");
 }
 
 void loop()
 {
     webServer.handleClient();
-    delay(1);
-	
+
+	delay(1);
+
 	getTemperature();
+
+
 
 	//Serial.println("before client");
 	WiFiClient client = server.available();
@@ -138,15 +187,15 @@ void loop()
     delay(1);
   }
 
-  
+  //-rest_ui.handle(client);
+ 
 }
+
 
 void webServerInit(void)
 {
 	Serial.println("in webSereverInit");
 	webServer.on("/", handle_root); // handling main webpage
-	webServer.on("/relayOn", handle_relayOn); // relay On handling
-	webServer.on("/relayOff", handle_relayOff);// relay Off handling
 
 	webServer.begin();
 	Serial.println("HTTP server started");
@@ -155,54 +204,24 @@ void webServerInit(void)
 void handle_root()
 {
 	Serial.println("in Handleroot");
+	
 	webPage = buildWebPage();
+
 	webServer.send(200, "text/html", webPage);
 	
 }
 
-void handle_relayOn()
-{
-	if (!isrelayOn)
-	{
-		Serial.println("Switching On relay");
-		digitalWrite(relayPin, HIGH);
-		isrelayOn = true;
-	}
-	handle_root();
-}
-
-void handle_relayOff()
-{
-	if (isrelayOn)
-	{
-		Serial.println("Switching Of relay");
-		digitalWrite(relayPin, LOW);
-		isrelayOn = false;
-	}
-	handle_root();
-}
-
+//function for creating up to date web page
 String buildWebPage()
 {
 	String page = "";
-	
-	page += "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN' 'http://www.w3.org/TR/html4/loose.dtd'>";
-	page += "<html> <head> <title>Test page</title> </head>";
-	page += "<body>";
-
-	page += "<h1>Test page</h1>";	//page header
-	page += "<h2>" + dateTime + "</h2>";	//show date and time
-	page += "<h2>Temperature: ";
-	page += aT;		//show temperature
-	page += "</h2>"; 
-	page +=  "<h2>Humidity: ";
-	page += aH;		//show humidity
-	page += "</h2>"; 
-	page += " <h2>Relay control</h2>";
-	page += "<h1> <a href=\"relayOn\"> <button style='width:45%;height:20%;background-color:lightgreen;font-size:300%'>Relay On</button> </a>";
-	page += "<a href=\"relayOff\"> <button style='width:45%;height:20%;background-color:lightgray;font-size:300%'>Relay Off</button> </a> </h1>";
-
-	page += "</body> </html>";
+	page += "<h1>Test page</h1><p>Temperature: ";
+	page += aT;
+	page += "</p> <p>Humidity: ";
+	page += aH;
+	page += "</p> <p>Relay control</p>";
+	page += "<p> <a href=\"relayOn\"> <button>On</button> </a> &nbsp;";
+	page += "<a href=\"relayOff\"> <button>Off</button> </a> </p>";
 
 	return page;
 }
@@ -239,10 +258,10 @@ void getTemperature(){
 	  aH = tempH/thAverageVar;
 	  
 	  //converting float to string for Win explorer refresh
-	  //saT = toString(aT);
-	  //Serial.print("after tostring conversion - ");
-	  //Serial.println(saT);
-	  //saH = toString(aH);
+	 /* saT = toString(aT);
+	  Serial.print("after tostring conversion - ");
+	  Serial.println(saT);
+	  saH = toString(aH);*/
 
 	  Serial.print("Amounts of measurement: ");
 	  Serial.println(thAverageVar);
@@ -274,7 +293,7 @@ void getTemperature(){
   }
 
 }
-// to string function 
+// 
 String getTime(){
 	
 	
@@ -307,32 +326,7 @@ String getTime(){
 	}
 }
 
-void dhtInit ()
-{
 
-  startMills = millis();
-  
-  // delay 2 sec before start acquire DHT
-  while ( (millis() - startMills) < 2000 ) {
-    yield();
-  }
-
-// blocking method for DHT
-  acquirestatus = 0;
-  acquireresult = DHT.acquireAndWait(1000);
-  if ( acquireresult == 0 ) {
-    t = DHT.getCelsius();
-    h = DHT.getHumidity();
-    d = DHT.getDewPoint();
-  } else {
-    t = h = d = 0;
-  }
-}
-
-// This wrapper is in charge of calling must be defined like this for the lib work
-void dht_wrapper() {
-  DHT.isrCallback();
-}
 
 
 
