@@ -14,8 +14,6 @@
 // The port to listen for incoming TCP connections
 #define LISTEN_PORT           8080 // WiFI Server listen port
 
-
-
 //-------------------------------
 //define constants
 // WiFi parameters
@@ -63,6 +61,7 @@ void dht_wrapper(); // must be declared before the lib initialization
 // Init functions
 void dhtInit ();
 void webServerInit(void);
+void WiFiInit();
 
 //User functions
 void getTemperature();
@@ -83,41 +82,27 @@ WiFiServer server(LISTEN_PORT);
 ESP8266WebServer webServer(80);
 
 
-
 //------------------------------
 // Initialize the system
 void setup()
 {
   Serial.begin(115200); 
   //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
-  Serial.println("Starting....");
- 
-  void dhtInit ();
-
-  WiFi.begin(ssid,password);
- // Serial.println (WiFi.localIP()); // not using becouse didn't get connected status while was connected to network
-  /*while (WiFi.localIP() == "0.0.0.0"){
-	  delay(500);
-	  (WiFi.printDiag(Serial));
-
-	  Serial.println(".");
-	  Serial.println(WiFi.status());
-	  Serial.println(" ");
-  }*/
+  Serial.println("Setup Started....");
+  Serial.println ("-------------------------");
   
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println(WiFi.localIP());
-  
-  // Start WiFI server
-  server.begin();
-  Serial.println("Server started");
-  
+  //Initializing WiFI
+  WiFiInit();
   // init and start Web server
   webServerInit();
+  //Initializing DHT
+  dhtInit ();
 
   pinMode(relayPin, OUTPUT); // setting relay pin to output
-  
+
+  Serial.println ("Setup finished.");
+  Serial.println ("-------------------------");
+  Serial.println ("");
 }
 
 void loop()
@@ -143,18 +128,20 @@ void loop()
 
 void webServerInit(void)
 {
-	Serial.println("in webSereverInit");
+	
 	webServer.on("/", handle_root); // handling main webpage
 	webServer.on("/lightOn", handle_lightOn); // relay On handling
 	webServer.on("/lightOff", handle_lightOff);// relay Off handling
 
 	webServer.begin();
-	Serial.println("HTTP server started");
+	Serial.println("HTTP server started - port 80");
+  Serial.println ("Web server initialization succeed.");
+  Serial.println ("");
 }
 
 void handle_root()
 {
-	Serial.println("in Handleroot");
+	
 	webPage = buildWebPage();
 	webServer.send(200, "text/html", webPage);
 	
@@ -210,7 +197,6 @@ String buildWebPage()
 
 	return page;
 }
-
 
 // Get temperature function
 void getTemperature(){
@@ -284,16 +270,18 @@ String getTime(){
 	
 	WiFiClient client;
 	//String datetime = " ";
+	Serial.print("");
 	Serial.print("connecting to ");
 	Serial.println(timeServerHost);
 	if (!client.connect(timeServerHost, timeServerHttpPort)) {
 		Serial.println("Time server connection failed");
-	}
+	} else {
 
 	//Serial.println("SEND REQUEST");
 	client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMcu Lua;)\r\n\r\n");
-
+	
 	delay(100);
+	}
 
 	while(client.available())
   {
@@ -331,11 +319,61 @@ void dhtInit ()
   } else {
     t = h = d = 0;
   }
+
+  Serial.println ("");
+  Serial.println ("DHT sensor initialization succeed.");
+  Serial.println ("");
 }
 
 // This wrapper is in charge of calling must be defined like this for the lib work
 void dht_wrapper() {
   DHT.isrCallback();
+}
+
+//Init wifi
+void WiFiInit()
+{
+	// tryin got connect to WiFi net
+  WiFi.mode(WIFI_STA);
+  byte tries = 20;
+  WiFi.begin(ssid,password);
+  
+  // checking connection 10 times or untill connection succeed
+  while (--tries && WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(1000);
+  }
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    // if unable to connect ot WiFi starting Access Point
+    Serial.println("");
+    Serial.println("WiFi up AP");
+    
+	WiFi.disconnect();
+
+  // changen WiFI mode
+  WiFi.mode(WIFI_AP);
+  IPAddress apIP(192, 168, 4, 1);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP("ESP8266_AP", "12345");
+  }
+  else {
+    // Иначе удалось подключиться отправляем сообщение
+    // о подключении и выводим адрес IP
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+
+  // Start WiFI server
+  server.begin();
+  Serial.println("WiFi Server started - port 8080");
+
+  Serial.println ("WiFI initialization succeed.");
+  Serial.println ("");
 }
 
 
