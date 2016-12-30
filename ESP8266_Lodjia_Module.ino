@@ -2,8 +2,7 @@
 
 
 #include <ESP8266WiFi.h>
-//-#include <aREST.h>
-//-#include <aREST_UI.h>
+
 #include <ESP8266WebServer.h> //HTTP WebServer
 #include "PietteTech_DHT.h" //DHT sensor lib
 
@@ -48,10 +47,11 @@ float tempT, tempH, aT, aH = 0;
 String dateTime = "";
 String webPage = "";
 
-bool isrelayOn = false;
+bool isLightOn = false;
+String lightState = "Off";
 
 //Define pins
-int relayPin = 5; // relay pin
+int relayPin = 5; // light pin
 
 
 //------------------------------
@@ -70,8 +70,8 @@ String getTime();
 //String toString (float data);
 String buildWebPage();
 void handle_root();
-void handle_relayOn();
-void handle_relayOff();
+void handle_lightOn();
+void handle_lightOff();
 
 
 //------------------------------
@@ -145,8 +145,8 @@ void webServerInit(void)
 {
 	Serial.println("in webSereverInit");
 	webServer.on("/", handle_root); // handling main webpage
-	webServer.on("/relayOn", handle_relayOn); // relay On handling
-	webServer.on("/relayOff", handle_relayOff);// relay Off handling
+	webServer.on("/lightOn", handle_lightOn); // relay On handling
+	webServer.on("/lightOff", handle_lightOff);// relay Off handling
 
 	webServer.begin();
 	Serial.println("HTTP server started");
@@ -160,24 +160,26 @@ void handle_root()
 	
 }
 
-void handle_relayOn()
+void handle_lightOn()
 {
-	if (!isrelayOn)
+	if (!isLightOn)
 	{
-		Serial.println("Switching On relay");
+		Serial.println("Switching On light");
 		digitalWrite(relayPin, HIGH);
-		isrelayOn = true;
+		isLightOn = true;
+		lightState = "ON";
 	}
 	handle_root();
 }
 
-void handle_relayOff()
+void handle_lightOff()
 {
-	if (isrelayOn)
+	if (isLightOn)
 	{
-		Serial.println("Switching Of relay");
+		Serial.println("Switching Of light");
 		digitalWrite(relayPin, LOW);
-		isrelayOn = false;
+		isLightOn = false;
+		lightState = "Off";
 	}
 	handle_root();
 }
@@ -198,9 +200,11 @@ String buildWebPage()
 	page +=  "<h2>Humidity: ";
 	page += aH;		//show humidity
 	page += "</h2>"; 
-	page += " <h2>Relay control</h2>";
-	page += "<h1> <a href=\"relayOn\"> <button style='width:45%;height:20%;background-color:lightgreen;font-size:300%'>Relay On</button> </a>";
-	page += "<a href=\"relayOff\"> <button style='width:45%;height:20%;background-color:lightgray;font-size:300%'>Relay Off</button> </a> </h1>";
+	page += " <h2>Light ";
+	page += lightState;
+	page += "</h2>";
+	page += "<h1> <a href=\"lightOn\"> <button style='width:45%;height:20%;background-color:lightgreen;font-size:300%'>Light On</button> </a>";
+	page += "<a href=\"lightOff\"> <button style='width:45%;height:20%;background-color:lightgray;font-size:300%'>Light Off</button> </a> </h1>";
 
 	page += "</body> </html>";
 
