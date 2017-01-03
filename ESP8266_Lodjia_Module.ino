@@ -27,7 +27,7 @@ const char* password = "tofave12";
 const char* timeServerHost = "ntp.time.in.ua";
 const int timeServerHttpPort = 13;
 
-//const int relayPin = 13;
+//const int lightPin = 13;
 
 
 //-------------------------------
@@ -48,8 +48,14 @@ String webPage = "";
 bool isLightOn = false;
 String lightState = "Off";
 
+bool isPowerOn = true;
+String powerState = "On";
+
+int maxTranzLevel = 1023; //Maximim level for opening Tranzistor (213 - 4.2V on Gate, 12.0V on Drain) 
+
 //Define pins
-int relayPin = 5; // light pin
+int lightPin = 5; //light pin
+int powerPin = 13; //power pin
 
 
 //------------------------------
@@ -69,9 +75,12 @@ String getTime();
 //String toString (float data);
 String buildWebPage();
 void handle_root();
+//functions for light control
 void handle_lightOn();
 void handle_lightOff();
-
+//functions for Power control
+void handle_powerOn();
+void handle_powerOff();
 
 //------------------------------
 // Libs instantiate
@@ -98,7 +107,12 @@ void setup()
   //Initializing DHT
   dhtInit ();
 
-  pinMode(relayPin, OUTPUT); // setting relay pin to output
+  pinMode(lightPin, OUTPUT); // setting light pin to output
+  digitalWrite(lightPin, LOW); //Light is OFF by default
+
+  pinMode(powerPin, OUTPUT); //setting Power pin to output
+  digitalWrite(powerPin, HIGH); //Power is ON by default
+  
 
   Serial.println ("Setup finished.");
   Serial.println ("-------------------------");
@@ -130,13 +144,55 @@ void webServerInit(void)
 {
 	
 	webServer.on("/", handle_root); // handling main webpage
-	webServer.on("/lightOn", handle_lightOn); // relay On handling
-	webServer.on("/lightOff", handle_lightOff);// relay Off handling
+
+	webServer.on("/lightOn", handle_lightOn); // light On handling
+	webServer.on("/lightOff", handle_lightOff);// light Off handling
+
+	webServer.on("/powerOn", handle_powerOn); // light On handling
+	webServer.on("/powerOff", handle_powerOff);// light Off handling
 
 	webServer.begin();
 	Serial.println("HTTP server started - port 80");
-  Serial.println ("Web server initialization succeed.");
-  Serial.println ("");
+	Serial.println("");
+    Serial.println ("Web server initialization succeed.");
+    Serial.println ("");
+}
+
+String buildWebPage()
+{
+	String page = "";
+
+	page += "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN' 'http://www.w3.org/TR/html4/loose.dtd'>";
+	page += "<html> <head> <title>Test page</title> </head>";
+	page += "<body>";
+
+	page += "<h1>Test page</h1>";	//page header
+
+	page += "<h2>" + dateTime + "</h2>";	//show date and time
+
+	page += "<h2>Temperature: ";
+	page += aT;		//show temperature
+	page += "</h2>";
+
+	page += "<h2>Humidity: ";
+	page += aH;		//show humidity
+	page += "</h2>";
+
+	page += "<h2>Light ";
+	page += lightState; //show light state
+	page += "</h2>";
+	page += "<h1> <a href=\"lightOn\"> <button style='width:47%;height:20%;background-color:lightgreen;font-size:300%'>Light On</button> </a>";
+	page += "<a href=\"lightOff\"> <button style='width:47%;height:20%;background-color:lightgray;font-size:300%'>Light Off</button> </a> </h1>";
+
+	page += "<h2>Power ";
+	page += powerState; //show power state
+	page += "</h2>";
+	page += "<h1> <a href=\"powerOn\"> <button style='width:47%;height:20%;background-color:lightgreen;font-size:300%'>Power On</button> </a>";
+	page += "<a href=\"powerOff\"> <button style='width:47%;height:20%;background-color:red;font-size:300%'>Power Off</button> </a> </h1>";
+
+	page += "</body> </html>";
+
+	return page;
 }
 
 void handle_root()
@@ -144,6 +200,7 @@ void handle_root()
 	
 	webPage = buildWebPage();
 	webServer.send(200, "text/html", webPage);
+	//Serial.println(webPage);
 	
 }
 
@@ -152,51 +209,54 @@ void handle_lightOn()
 	if (!isLightOn)
 	{
 		Serial.println("Switching On light");
-		digitalWrite(relayPin, HIGH);
+		for (int i = 0; i <= maxTranzLevel; i++)
+		{
+			analogWrite(lightPin, i);
+			delay(1);
+		}
+		
 		isLightOn = true;
 		lightState = "ON";
 	}
 	handle_root();
 }
-
 void handle_lightOff()
 {
 	if (isLightOn)
 	{
-		Serial.println("Switching Of light");
-		digitalWrite(relayPin, LOW);
+		Serial.println("Switching Off light");
+		for (int i = maxTranzLevel; i >= 0; i--)
+		{
+			analogWrite(lightPin, i);
+			delay(2);
+		}
 		isLightOn = false;
 		lightState = "Off";
 	}
 	handle_root();
 }
 
-String buildWebPage()
-{
-	String page = "";
-	
-	page += "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN' 'http://www.w3.org/TR/html4/loose.dtd'>";
-	page += "<html> <head> <title>Test page</title> </head>";
-	page += "<body>";
-
-	page += "<h1>Test page</h1>";	//page header
-	page += "<h2>" + dateTime + "</h2>";	//show date and time
-	page += "<h2>Temperature: ";
-	page += aT;		//show temperature
-	page += "</h2>"; 
-	page +=  "<h2>Humidity: ";
-	page += aH;		//show humidity
-	page += "</h2>"; 
-	page += " <h2>Light ";
-	page += lightState;
-	page += "</h2>";
-	page += "<h1> <a href=\"lightOn\"> <button style='width:45%;height:20%;background-color:lightgreen;font-size:300%'>Light On</button> </a>";
-	page += "<a href=\"lightOff\"> <button style='width:45%;height:20%;background-color:lightgray;font-size:300%'>Light Off</button> </a> </h1>";
-
-	page += "</body> </html>";
-
-	return page;
+void handle_powerOn() {
+	if (!isPowerOn)
+	{
+		Serial.println("Switching On Power");
+		digitalWrite(powerPin, HIGH);
+		isPowerOn = true;
+		powerState = "ON";
+	}
+	handle_root();
 }
+void handle_powerOff() {
+	if (isPowerOn)
+	{
+		Serial.println("Switching Off Power");
+		digitalWrite(powerPin, LOW);
+		isPowerOn = false;
+		powerState = "Off";
+	}
+	handle_root();
+}
+
 
 // Get temperature function
 void getTemperature(){
@@ -277,26 +337,24 @@ String getTime(){
 		Serial.println("Time server connection failed");
 	} else {
 
-	//Serial.println("SEND REQUEST");
-	client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMcu Lua;)\r\n\r\n");
+		//Serial.println("SEND REQUEST");
+		client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMcu Lua;)\r\n\r\n");
 	
-	delay(100);
-	}
-
-	while(client.available())
-  {
-    String line = client.readStringUntil('\r');
-
-      //Parsing date time from server responce
-      dateTime = line.substring(0, 11); // getting date
-	  dateTime += line.substring(20, 25); //getting year
-	  dateTime += line.substring(10, 20); // getting time
-           
-      Serial.println(dateTime);
-  	
-	  return dateTime;
+		delay(100);
 	
-	}
+
+		while(client.available())
+			{
+				String line = client.readStringUntil('\r');
+
+				//Parsing date time from server responce
+				dateTime = line.substring(0, 11); // getting date
+				dateTime += line.substring(20, 25); //getting year
+				dateTime += line.substring(10, 20); // getting time
+				Serial.println(dateTime);
+				return dateTime;
+			}
+		}
 }
 
 void dhtInit ()
@@ -319,8 +377,6 @@ void dhtInit ()
   } else {
     t = h = d = 0;
   }
-
-  Serial.println ("");
   Serial.println ("DHT sensor initialization succeed.");
   Serial.println ("");
 }
@@ -349,7 +405,7 @@ void WiFiInit()
   {
     // if unable to connect ot WiFi starting Access Point
     Serial.println("");
-    Serial.println("WiFi up AP");
+    Serial.println("WiFi up as Access Point");
     
 	WiFi.disconnect();
 
