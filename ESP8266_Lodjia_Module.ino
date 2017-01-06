@@ -163,6 +163,14 @@ String buildWebPage()
 	String page = "";
 
 	page += "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN' 'http://www.w3.org/TR/html4/loose.dtd'>";
+	//button and colors styles
+	page += "<style>";
+	page += ".button {height: 150px; width: 480px; text-align: center; text-decoration: none; font-size: 100px; opacity: 0.8; filter: alpha(opacity=80); border-radius: 30px;} ";
+	page += ".blue {background-color: dodgerblue;}";
+	page += ".green {background-color: mediumspringgreen}";
+	page += ".red {background-color: tomato}";
+	page += "</style>";
+	
 	page += "<html> <head> <title>Test page</title> </head>";
 	page += "<body>";
 
@@ -181,15 +189,18 @@ String buildWebPage()
 	page += "<h2>Light ";
 	page += lightState; //show light state
 	page += "</h2>";
-	page += "<h1> <a href=\"lightOn\"> <button style='width:47%;height:20%;background-color:lightgreen;font-size:300%'>Light On</button> </a>";
-	page += "<a href=\"lightOff\"> <button style='width:47%;height:20%;background-color:lightgray;font-size:300%'>Light Off</button> </a> </h1>";
+
+	page += "";
+	page += "<h1> <a href=\"lightOn\"> <button class='button green'>Light On</button> </a>";
+	page += "<a href=\"lightOff\"> <button class='button blue'>Light Off</button> </a> </h1>";
 
 	page += "<h2>Power ";
 	page += powerState; //show power state
 	page += "</h2>";
-	page += "<h1> <a href=\"powerOn\"> <button style='width:47%;height:20%;background-color:lightgreen;font-size:300%'>Power On</button> </a>";
-	page += "<a href=\"powerOff\"> <button style='width:47%;height:20%;background-color:red;font-size:300%'>Power Off</button> </a> </h1>";
 
+	page += "<h1> <a href=\"powerOn\"> <button class='button green'>Power On</button> </a>";
+	page += "<a href=\"powerOff\"> <button class='button red'>Power Off</button> </a> </h1>";
+	
 	page += "</body> </html>";
 
 	return page;
@@ -197,7 +208,6 @@ String buildWebPage()
 
 void handle_root()
 {
-	
 	webPage = buildWebPage();
 	webServer.send(200, "text/html", webPage);
 	//Serial.println(webPage);
