@@ -17,11 +17,11 @@
 //-------------------------------
 //define constants
 // WiFi parameters
-const char* ssid = "Delphi_Guests";
-const char* password = "tofave12";
+//const char* ssid = "Delphi_Guests";
+//const char* password = "tofave12";
 
-//const char* ssid = "SlavaWIFI";
-//const char* password = "ZXCde3_vgy765_1234567890_vvv";
+const char* ssid = "SlavaWIFI";
+const char* password = "ZXCde3_vgy765_1234567890_vvv";
 
 //Time server 
 const char* timeServerHost = "ntp.time.in.ua";
@@ -44,6 +44,7 @@ float tempT, tempH, aT, aH = 0;
 
 String dateTime = "";
 String webPage = "";
+String xml = "";
 
 bool isLightOn = false;
 String lightState = "Off";
@@ -82,6 +83,9 @@ void handle_lightOff();
 void handle_powerOn();
 void handle_powerOff();
 
+void handle_xml();
+String buildXML();
+
 //------------------------------
 // Libs instantiate
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
@@ -95,10 +99,13 @@ ESP8266WebServer webServer(80);
 // Initialize the system
 void setup()
 {
+
   Serial.begin(115200); 
   //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
+  Serial.println("");
   Serial.println("Setup Started....");
   Serial.println ("-------------------------");
+  delay(3000);
   
   //Initializing WiFI
   WiFiInit();
@@ -121,13 +128,24 @@ void setup()
 
 void loop()
 {
+
+	
     webServer.handleClient();
     delay(1);
 	
 	getTemperature();
 
 	//Serial.println("before client");
+
+
+	/*Serial.println("response:");
+	Serial.println(webServer.args());
+	Serial.println(webServer.headers());
+	Serial.println(webServer.hostHeader());
+	delay(1000);*/
 	WiFiClient client = server.available();
+
+	
   if (!client) {
     return;
   }
@@ -136,7 +154,7 @@ void loop()
   while (!client.available()) {
     delay(1);
   }
-
+  
   
 }
 
@@ -144,6 +162,8 @@ void webServerInit(void)
 {
 	
 	webServer.on("/", handle_root); // handling main webpage
+	webServer.on("/xml", handle_xml);//handling xml
+
 
 	webServer.on("/lightOn", handle_lightOn); // light On handling
 	webServer.on("/lightOff", handle_lightOff);// light Off handling
@@ -171,35 +191,64 @@ String buildWebPage()
 	page += ".red {background-color: tomato}";
 	page += "</style>";
 	
+	//Java script
+	page += "<SCRIPT>";
+	page += "var xmlHttp=createXmlHttpObject();";
+	
+	page += "function createXmlHttpObject(){ if(window.XMLHttpRequest){ xmlHttp=new XMLHttpRequest();}else{ xmlHttp=new ActiveXObject('Microsoft.XMLHTTP');} return xmlHttp;}";
+	
+	page += "function process(){";
+	page += "if(xmlHttp.readyState==0 || xmlHttp.readyState==4){";
+	page += "xmlHttp.open('PUT','xml',true); xmlHttp.onreadystatechange=handleServerResponse; xmlHttp.send(null);}";
+	page += "setTimeout('process()',5000);}";
+
+	page += "function handleServerResponse(){";
+	page += "if(xmlHttp.readyState==4 && xmlHttp.status==200){";
+	page += "xmlResponse=xmlHttp.responseXML;";
+
+	page += "xmldoc = xmlResponse.getElementsByTagName('dateTime'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('dateTime').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('temperature'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('temperature').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('humidity'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('humidity').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('lightState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('lightState').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('powerState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('powerState').innerHTML = message;";
+
+	page += "}}";
+	
+	page += "function sendButton(Parameter){";
+	page += "server = '/' + Parameter; ";
+	page += "request = new XMLHttpRequest();";
+	page += "request.open('GET', server, true);";
+	page += "request.send();}";
+
+
+
+
+	page += "</SCRIPT>";
+
+
 	page += "<html> <head> <title>Test page</title> </head>";
-	page += "<body>";
+	page += "<body onload='process()'>"; //runnig function when page loaded
 
 	page += "<h1>Test page</h1>";	//page header
 
-	page += "<h2>" + dateTime + "</h2>";	//show date and time
+	page += "<h2 id='dateTime'> </h2>"; //show date and time
+	page += "<h2>Temperature: <span id='temperature'> </span></h2>"; //show temperature
+	page += "<h2>Humidity: <span id='humidity'> </span></h2>"; //show humidity
+	page += "<h2>Light <span id='lightState'> </span></h2>"; //show light state
 
-	page += "<h2>Temperature: ";
-	page += aT;		//show temperature
-	page += "</h2>";
+	//page += "";
+	//page += "<h1> <a href=\"lightOn\"> <button class='button green'>Light On</button> </a>";
+	//page += "<a href=\"lightOff\"> <button class='button blue'>Light Off</button> </a> </h1>";
+	page += "<h1> <button class='button green' onclick='sendButton(&quot;lightOn&quot;);'>Light On</button>";
+	page += "<button class='button blue' onclick='sendButton(&quot;lightOff&quot;);'>Light Off</button> </h1>";
 
-	page += "<h2>Humidity: ";
-	page += aH;		//show humidity
-	page += "</h2>";
+	page += "<h2>Power <span id='powerState'> </span></h2>"; //show power state
 
-	page += "<h2>Light ";
-	page += lightState; //show light state
-	page += "</h2>";
+	page += "<h1> <button class='button green' onclick='sendButton(&quot;powerOn&quot;);'>Power On</button>";
+	page += "<button class='button red' onclick='sendButton(&quot;powerOff&quot;);'>Power Off</button> </h1>";
 
-	page += "";
-	page += "<h1> <a href=\"lightOn\"> <button class='button green'>Light On</button> </a>";
-	page += "<a href=\"lightOff\"> <button class='button blue'>Light Off</button> </a> </h1>";
-
-	page += "<h2>Power ";
-	page += powerState; //show power state
-	page += "</h2>";
-
-	page += "<h1> <a href=\"powerOn\"> <button class='button green'>Power On</button> </a>";
-	page += "<a href=\"powerOff\"> <button class='button red'>Power Off</button> </a> </h1>";
+	//page += "<h1> <a href=\"powerOn\"> <button class='button green'>Power On</button> </a>";
+	//page += "<a href=\"powerOff\"> <button class='button red'>Power Off</button> </a> </h1>";
 	
 	page += "</body> </html>";
 
@@ -212,6 +261,49 @@ void handle_root()
 	webServer.send(200, "text/html", webPage);
 	//Serial.println(webPage);
 	
+}
+
+void handle_xml()
+{
+	xml = buildXML();
+	webServer.send(200, "text/xml", xml);
+	Serial.println("");
+	Serial.println("xml Sent");
+	Serial.println(xml);
+	Serial.println("");
+
+}
+
+String buildXML()
+{
+	String xml = "";
+
+	xml += "<?xml version='1.0'?>";
+    xml += "<Donnees>"; 
+
+    xml += "<dateTime>";
+	xml += dateTime;
+    xml += "</dateTime>";
+    
+	xml += "<temperature>";
+	xml += aT;
+	xml += "</temperature>";
+
+	xml += "<humidity>";
+	xml += aH;
+	xml += "</humidity>";
+
+	xml += "<lightState>";
+	xml += lightState;
+	xml += "</lightState>";
+
+	xml += "<powerState>";
+	xml += powerState;
+	xml += "</powerState>";
+
+    xml += "</Donnees>";
+
+	return xml;
 }
 
 void handle_lightOn()
@@ -227,8 +319,8 @@ void handle_lightOn()
 		
 		isLightOn = true;
 		lightState = "ON";
+		webServer.send(200, "text/html", "OK");
 	}
-	handle_root();
 }
 void handle_lightOff()
 {
@@ -242,8 +334,8 @@ void handle_lightOff()
 		}
 		isLightOn = false;
 		lightState = "Off";
+		webServer.send(200, "text/html", "OK");
 	}
-	handle_root();
 }
 
 void handle_powerOn() {
@@ -253,8 +345,8 @@ void handle_powerOn() {
 		digitalWrite(powerPin, HIGH);
 		isPowerOn = true;
 		powerState = "ON";
+		webServer.send(200, "text/html", "OK");
 	}
-	handle_root();
 }
 void handle_powerOff() {
 	if (isPowerOn)
@@ -263,8 +355,8 @@ void handle_powerOff() {
 		digitalWrite(powerPin, LOW);
 		isPowerOn = false;
 		powerState = "Off";
+		webServer.send(200, "text/html", "OK");
 	}
-	handle_root();
 }
 
 
@@ -345,6 +437,9 @@ String getTime(){
 	Serial.println(timeServerHost);
 	if (!client.connect(timeServerHost, timeServerHttpPort)) {
 		Serial.println("Time server connection failed");
+
+		dateTime = "Time server unavailable";
+		return dateTime;
 	} else {
 
 		//Serial.println("SEND REQUEST");
@@ -365,6 +460,9 @@ String getTime(){
 				return dateTime;
 			}
 		}
+
+	dateTime = "Time server unavailable";
+	return dateTime;
 }
 
 void dhtInit ()
@@ -404,26 +502,42 @@ void WiFiInit()
   byte tries = 20;
   WiFi.begin(ssid,password);
   
+  IPAddress defaultIp(0, 0, 0, 0);
   // checking connection 10 times or untill connection succeed
-  while (--tries && WiFi.status() != WL_CONNECTED)
+  while (--tries && WiFi.localIP() == defaultIp)
   {
     Serial.print(".");
+	Serial.println(WiFi.localIP());
     delay(1000);
   }
 
-  if (WiFi.status() != WL_CONNECTED)
+  if (WiFi.localIP() == defaultIp)
   {
     // if unable to connect ot WiFi starting Access Point
     Serial.println("");
-    Serial.println("WiFi up as Access Point");
+    Serial.println("Starting device as Access Point");
     
 	WiFi.disconnect();
 
+	const char *ssidAP = "ESP8266AP";
+	const char *passwordAP = "12345";
+
   // changen WiFI mode
   WiFi.mode(WIFI_AP);
-  IPAddress apIP(192, 168, 4, 1);
+ /* IPAddress apIP(192, 168, 4, 1);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   WiFi.softAP("ESP8266_AP", "12345");
+*/
+	WiFi.softAP(ssidAP, passwordAP);
+	IPAddress myIP = WiFi.softAPIP();
+
+	Serial.print("WiFi running as Access Point: ");
+	Serial.println(ssidAP);
+	Serial.print("Password: ");
+	Serial.println(passwordAP);
+	Serial.print("IP address: ");
+    Serial.println(myIP);
+
   }
   else {
     // Иначе удалось подключиться отправляем сообщение
