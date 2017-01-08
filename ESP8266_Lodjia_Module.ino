@@ -27,8 +27,6 @@ const char* password = "ZXCde3_vgy765_1234567890_vvv";
 const char* timeServerHost = "ntp.time.in.ua";
 const int timeServerHttpPort = 13;
 
-//const int lightPin = 13;
-
 
 //-------------------------------
 //define globals
@@ -50,13 +48,16 @@ bool isLightOn = false;
 String lightState = "Off";
 
 bool isPowerOn = true;
-String powerState = "On";
+String powerState = "ON";
 
 int maxTranzLevel = 1023; //Maximim level for opening Tranzistor (213 - 4.2V on Gate, 12.0V on Drain) 
 
+bool pirState = false;
+
 //Define pins
 int lightPin = 5; //light pin
-int powerPin = 13; //power pin
+int powerPin = 13; //power pin 13
+int pirPin = 0; //PIR sensor pin
 
 
 //------------------------------
@@ -86,6 +87,8 @@ void handle_powerOff();
 void handle_xml();
 String buildXML();
 
+void detectMotion();
+
 //------------------------------
 // Libs instantiate
 PietteTech_DHT DHT(DHTPIN, DHTTYPE, dht_wrapper);
@@ -101,7 +104,7 @@ void setup()
 {
 
   Serial.begin(115200); 
-  //Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
+  Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
   Serial.println("");
   Serial.println("Setup Started....");
   Serial.println ("-------------------------");
@@ -119,8 +122,10 @@ void setup()
 
   pinMode(powerPin, OUTPUT); //setting Power pin to output
   digitalWrite(powerPin, HIGH); //Power is ON by default
-  
 
+  digitalWrite(pirPin, LOW); //pirPin is LOW by default
+  pinMode(pirPin, INPUT); //setting PirPin to input
+  
   Serial.println ("Setup finished.");
   Serial.println ("-------------------------");
   Serial.println ("");
@@ -135,16 +140,13 @@ void loop()
 	
 	getTemperature();
 
-	//Serial.println("before client");
+	detectMotion();
+	
+	//Serial.println("before client init");
 
-
-	/*Serial.println("response:");
-	Serial.println(webServer.args());
-	Serial.println(webServer.headers());
-	Serial.println(webServer.hostHeader());
-	delay(1000);*/
 	WiFiClient client = server.available();
-
+	
+	//Serial.println("after client init");
 	
   if (!client) {
     return;
@@ -211,6 +213,7 @@ String buildWebPage()
 	page += "xmldoc = xmlResponse.getElementsByTagName('humidity'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('humidity').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('lightState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('lightState').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('powerState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('powerState').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('pirState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('pirState').innerHTML = message;";
 
 	page += "}}";
 	
@@ -237,8 +240,7 @@ String buildWebPage()
 	page += "<h2>Light <span id='lightState'> </span></h2>"; //show light state
 
 	//page += "";
-	//page += "<h1> <a href=\"lightOn\"> <button class='button green'>Light On</button> </a>";
-	//page += "<a href=\"lightOff\"> <button class='button blue'>Light Off</button> </a> </h1>";
+	
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;lightOn&quot;);'>Light On</button>";
 	page += "<button class='button blue' onclick='sendButton(&quot;lightOff&quot;);'>Light Off</button> </h1>";
 
@@ -247,9 +249,9 @@ String buildWebPage()
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;powerOn&quot;);'>Power On</button>";
 	page += "<button class='button red' onclick='sendButton(&quot;powerOff&quot;);'>Power Off</button> </h1>";
 
-	//page += "<h1> <a href=\"powerOn\"> <button class='button green'>Power On</button> </a>";
-	//page += "<a href=\"powerOff\"> <button class='button red'>Power Off</button> </a> </h1>";
 	
+	page += "<h2>Motion <span id='pirState'> </span></h2>"; //show pir state
+		
 	page += "</body> </html>";
 
 	return page;
@@ -267,10 +269,10 @@ void handle_xml()
 {
 	xml = buildXML();
 	webServer.send(200, "text/xml", xml);
-	Serial.println("");
+	/*Serial.println("");
 	Serial.println("xml Sent");
 	Serial.println(xml);
-	Serial.println("");
+	Serial.println("");*/
 
 }
 
@@ -300,6 +302,10 @@ String buildXML()
 	xml += "<powerState>";
 	xml += powerState;
 	xml += "</powerState>";
+
+	xml += "<pirState>";
+	xml += pirState;
+	xml += "</pirState>";
 
     xml += "</Donnees>";
 
@@ -359,10 +365,21 @@ void handle_powerOff() {
 	}
 }
 
+void detectMotion() {
 
+	if (digitalRead(pirPin) != pirState)
+	{
+		pirState = digitalRead(pirPin); // checkin for motion detection
+		Serial.print("Motion - ");
+		Serial.println(pirState);
+	}
+	
+}
 // Get temperature function
 void getTemperature(){
   
+	//Serial.println("In GetTemperatre");
+
    if (bDHTstarted) {
     acquirestatus = DHT.acquiring();
     if (!acquirestatus) {
@@ -375,17 +392,23 @@ void getTemperature(){
       bDHTstarted = false;
     }
   }
+   //Serial.println("After T and H collected from DHT");
+
+   
    //collecting data for getting average T and H
    tempT = tempT + t;
    tempH = tempH + h;
    thAverageVar ++;
 
+   //Serial.println("After summation of temp values");
 
   if ((millis() - startMills) > REPORT_INTERVAL) {
 
 	  //getting time
+	  Serial.println("before get time in get Temperature");
 	  getTime();
-	 
+	  Serial.println("after get time in get Temperature");
+
 	  //getting avarage T and H
 	  aT = tempT/thAverageVar;
 	  aH = tempH/thAverageVar;
@@ -407,24 +430,27 @@ void getTemperature(){
 	  Serial.println(aT);
 	
 	  //setting all tem vars to 0
+	  //Serial.println("setting all var to 0 get Temperature");
       startMills = millis();
 	  tempT = 0;
 	  tempH = 0;
 	  thAverageVar = 0;
 
+	  //Serial.println("before remove lock in get temp");
     // to remove lock
     if (acquirestatus == 1) {
       DHT.reset();
 	  thAverageVar = 0;
     }
 
+	//Serial.println("before non blocking method in get Temperature");
     if (!bDHTstarted) {
       // non blocking method
       DHT.acquire();
       bDHTstarted = true;
     }
   }
-
+  //Serial.println("exition from get Temperature");
 }
 // to string function 
 String getTime(){
