@@ -34,7 +34,7 @@
 
 
 //Define pins
-int lightPin = 2; //light pin 13
+int lightPin = 2; //light pin 2
 int powerPin = 16; //power pin 16 (no need to pull up with 470 and 10k resistors)
 int pirPin = 14; //PIR sensor pin
 
@@ -95,8 +95,10 @@ float externalTemp;
 int	atmPressure = 0;
 int altitude = 0;
 
-//int cycle=0;
+int brightness = 0;
 
+//int cycle=0;
+/*
 
 //------------------------------
 //Functions declaration
@@ -129,7 +131,7 @@ void detectMotion();
 
 //for getting distance
 void getDistance();
-
+*/
 
 //------------------------------
 // Libs instantiate
@@ -148,7 +150,7 @@ Adafruit_BMP280 bmp; // SDA/SCL default to pins 4 & 5
 // Initialize the system
 void setup()
 {
-	//Serial.begin(115200);
+	Serial.begin(115200);
 	//Serial.setDebugOutput(true); // Uncomment if debug serial messages needed
 	Serial.println("");
 	Serial.println("Setup Started....");
@@ -203,6 +205,8 @@ void loop()
 	getExternalData();
 	
 	getDistance();
+
+	getBrightness();
 
 	//lightHardOnOff();
 

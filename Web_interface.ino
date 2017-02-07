@@ -145,9 +145,9 @@ String buildXML()
 	xml += pirState;
 	xml += "</pirState>";
 
-	//xml += "<distance>";
-	//xml += dist_cm;
-	//xml += "</distance>";
+	xml += "<distance>";
+	xml += dist_cm;
+	xml += "</distance>";
 
 	xml += "</Donnees>";
 

@@ -14,7 +14,7 @@ void bmpInit()
 {
 	if (!bmp.begin(0x76)) {
 		Serial.println("Could not find a valid BMP280 sensor, check wiring!");
-		while (1);
+		
 	}
 }
 

@@ -26,6 +26,9 @@
     <ClInclude Include="__vm\.ESP8266_Lodgia_Module.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__vm\.ESP8266_Lodjia_Module.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">

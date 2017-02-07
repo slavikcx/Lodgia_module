@@ -54,10 +54,10 @@ void getTemperature() {
 
 void getDistance()
 {
-	delay(500);
+	
 	Serial.println("Reading distance");
 
-	delay(50);// 50ms delay between measuring. 29ms minimum delay.
+	delay(100);// 100ms delay between measuring. 
 	unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
 	dist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
 
@@ -79,7 +79,7 @@ void getDistance()
 		Serial.println(" ");
 		Serial.println("verifiyng distance again");
 
-		delay(50);// 50ms delay between measuring. 29ms minimum delay.
+		delay(100);// 100ms delay between measuring. 
 		unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
 		dist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
 

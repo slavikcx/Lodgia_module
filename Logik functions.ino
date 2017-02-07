@@ -112,12 +112,31 @@ String getTime() {
 
 String moduleUpTime() {
 	String Time = "";
+	Time = convertMillisToTime(millis());
+	return Time;
+}
+
+void getBrightness()
+{
+	Serial.println("Getting brightness");
+	brightness = analogRead(A0);
+	Serial.print("Brightnes - ");
+	Serial.println(brightness);
+}
+
+
+String convertMillisToTime(unsigned long millisValue) //
+{
+	String Time = "";
 	unsigned long ss;
-	byte mm, hh;
-	ss = millis() / 1000;
-	hh = ss / 3600;
-	mm = (ss - hh * 3600) / 60;
-	ss = (ss - hh * 3600) - mm * 60;
+	byte mm, hh, dd;
+	ss = millisValue / 1000; //converting millis to seconds
+	dd = ss / 86400; // geeting days 
+	hh = (ss - dd * 86400) / 3600; // getting hours 
+	mm = (ss - dd * 86400 - hh * 3600) / 60; //getting minutes 
+	ss = ss - dd * 86400 - hh * 3600 - mm * 60; // getting seconds 
+
+	Time += (String)dd += "days ";
 	if (hh<10)Time += "0";
 	Time += (String)hh + ":";
 	if (mm<10)Time += "0";
