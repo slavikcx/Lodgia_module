@@ -34,10 +34,11 @@ String buildWebPage()
 	page += "xmldoc = xmlResponse.getElementsByTagName('lightState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('lightState').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('powerState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('powerState').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('pirState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('pirState').innerHTML = message;";
-	page += "xmldoc = xmlResponse.getElementsByTagName('UpTime'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('UpTime').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('moduleUpTime'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('moduleUpTime').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('outsideTemperature'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('outsideTemperature').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('pressure'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('pressure').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('distance'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('distance').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('roletState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('roletState').innerHTML = message;";
 
 
 	page += "}}";
@@ -55,7 +56,7 @@ String buildWebPage()
 	page += "<html> <head> <title>Test page</title> </head>";
 	page += "<body onload='process()'>"; //runnig function when page loaded
 
-	page += "<h1>Test page                   <span style='font-size:9px'>--UP Time <span id='UpTime'></span>--</span></h1>";	//page header
+	page += "<h1>Test page                   <span style='font-size:9px'>--UP Time <span id='moduleUpTime'></span>--</span></h1>";	//page header
 
 	page += "<h2 id='dateTime'> </h2>"; //show date and time
 
@@ -91,6 +92,10 @@ String buildWebPage()
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;powerOn&quot;);'>Power On</button>";
 	page += "<button class='button red' onclick='sendButton(&quot;powerOff&quot;);'>Power Off</button> </h1>";
 
+	page += "<h2>Blinds <span id='roletState'> </span></h2>"; //show blinds state
+
+	page += "<h1> <button class='button green' onclick='sendButton(&quot;blindsOpen&quot;);'>Open</button>";
+	page += "<button class='button blue' onclick='sendButton(&quot;blindsClose&quot;);'>Close</button> </h1>";
 
 	page += "<h2>Motion <span id='pirState'> </span></h2>"; //show pir state
 
@@ -113,9 +118,9 @@ String buildXML()
 	xml += dateTime;
 	xml += "</dateTime>";
 
-	xml += "<UpTime>";
-	xml += UpTime;
-	xml += "</UpTime>";
+	xml += "<moduleUpTime>";
+	xml += moduleUpTime;
+	xml += "</moduleUpTime>";
 
 	xml += "<insideTemperature>";
 	xml += insideTemperature;
@@ -140,6 +145,10 @@ String buildXML()
 	xml += "<powerState>";
 	xml += powerState;
 	xml += "</powerState>";
+
+	xml += "<roletState>";
+	xml += roletState;
+	xml += "</roletState>";
 
 	xml += "<pirState>";
 	xml += pirState;

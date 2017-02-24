@@ -8,7 +8,6 @@ void detectMotion() {
 		Serial.print("Motion - ");
 		Serial.println(pirState);
 	}
-
 }
 
 
@@ -48,18 +47,22 @@ void getTemperature() {
 			Serial.println(" %");
 		}
 	}
-
 	//Serial.println("exition from get Temperature");
 }
 
 void getDistance()
 {
-	
+	//delay(500);
 	Serial.println("Reading distance");
 
-	delay(100);// 100ms delay between measuring. 
+	delay(50);// 50ms delay between measuring. 29ms minimum delay.
 	unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
-	dist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
+	currentdist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
+
+	if (currentdist_cm != 0 && currentdist_cm < 100) //cutting out of range values
+	{
+		dist_cm = currentdist_cm;
+	}
 
 	Serial.print("Distance: ");
 	Serial.print(dist_cm);
@@ -67,27 +70,29 @@ void getDistance()
 	Serial.println(" ");
 
 	// checking if next distance measure will be <10cm to prevent false LED On
-	if (dist_cm < 10) {
+	if (dist_cm < hardLedTreshold) {
+		
 		Serial.println("dist_cm<10");
 
-		currentdist_cm = dist_cm;
+		previousDist_cm = dist_cm;
 
-		Serial.print("dist_cm: ");
-		Serial.println(dist_cm);
-		Serial.print("currentdist_cm: ");
-		Serial.println(currentdist_cm);
-		Serial.println(" ");
 		Serial.println("verifiyng distance again");
 
-		delay(100);// 100ms delay between measuring. 
+		delay(150);// 150ms delay between measuring for excluding incident switch. 29ms minimum delay. 
 		unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
-		dist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
+		currentdist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
+
+
+		if (currentdist_cm != 0 && currentdist_cm < MAX_DISTANCE)
+		{
+			dist_cm = currentdist_cm;
+		}
 
 		Serial.print("Distance: ");
 		Serial.print(dist_cm);
 		Serial.println("cm");
-		Serial.print("currentdist_cm: ");
-		Serial.println(currentdist_cm);
+		Serial.print("previousDist_cm: ");
+		Serial.println(previousDist_cm);
 	}
 }
 

@@ -235,6 +235,9 @@ void webServerInit(void)
 	webServer.on("/powerOn", handle_powerOn); // light On handling
 	webServer.on("/powerOff", handle_powerOff);// light Off handling
 
+	webServer.on("/blindsOpen", handle_roletOpen); // blinds Open handling
+	webServer.on("/blindsClose", handle_roletClose);// blinds Close handling
+
 	webServer.begin();
 	Serial.println("HTTP server started - port 80");
 	Serial.println("");
@@ -242,3 +245,11 @@ void webServerInit(void)
 	Serial.println("");
 }
 
+void timeInit()
+{
+	Serial.println("Getting current time from net...");
+	timeSync();
+	previousClockMillis = millis();
+	Serial.println("timeInit finieshed");
+
+}

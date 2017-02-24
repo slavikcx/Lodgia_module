@@ -256,5 +256,6 @@ ModelManifest.xml
 **/Debug
 **/__vm
 
+*.vcxproj
 *.vcxproj.*
 *.suo
