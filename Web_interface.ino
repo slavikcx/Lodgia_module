@@ -39,6 +39,7 @@ String buildWebPage()
 	page += "xmldoc = xmlResponse.getElementsByTagName('pressure'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('pressure').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('distance'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('distance').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('roletState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('roletState').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('brightness'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('brightness').innerHTML = message;";
 
 
 	page += "}}";
@@ -53,7 +54,7 @@ String buildWebPage()
 	page += "</SCRIPT>";
 
 
-	page += "<html> <head> <title>Test page</title> </head>";
+	page += "<html> <head> <title>Lodjia</title> </head>";
 	page += "<body onload='process()'>"; //runnig function when page loaded
 
 	page += "<h1>Test page                   <span style='font-size:9px'>--UP Time <span id='moduleUpTime'></span>--</span></h1>";	//page header
@@ -67,7 +68,7 @@ String buildWebPage()
 	page += "<div style='position: absolute; top: 45%; left: 8%; width: 300px; font-size:600%; color:Brown; font-weight:bold'><span id='pressure'></span>mm</div>";//show atmospheric pressure
 	
 	page += "<div style='position: absolute; top: 0; left: 50%; width: 250px'>";
-	page += "<img src='http://realestatetips.online/wp-content/uploads/2013/12/Investing-In-Apartment-Buildings-Pros-and-Cons-620x330.jpg' style='height: 250px; width: 480px' /></div>"; //external image source and size
+	page += "<img src='http://sharapova-design.ru/upload/29042013/information_items_297b.jpg' style='height: 250px; width: 480px' /></div>"; //external image source and size
 	page += "<div style='position: absolute; top: 4%; left: 57%; width: 300px; font-size:600%; color:Brown; font-weight:bold'><span id='insideTemperature'></span>oC</div>"; //show insideTemperature
 	page += "<div style='position: absolute; top: 45%; left: 58%; width: 200px; font-size:600%; color:Brown; font-weight:bold'><span id='humidity'></span>%</div>";//show humidity
 
@@ -99,7 +100,9 @@ String buildWebPage()
 
 	page += "<h2>Motion <span id='pirState'> </span></h2>"; //show pir state
 
-	page += "<h2>Distance <span id='distance'> </span></h2>"; //show pir state
+	page += "<h2>Distance <span id='distance'> </span></h2>"; //show distance 
+
+	page += "<h2>Brightness <span id='brightness'> </span></h2>"; //show brightness 
 
 	page += "</body> </html>";
 
@@ -157,6 +160,10 @@ String buildXML()
 	xml += "<distance>";
 	xml += dist_cm;
 	xml += "</distance>";
+
+	xml += "<brightness>";
+	xml += brightness;
+	xml += "</brightness>";
 
 	xml += "</Donnees>";
 

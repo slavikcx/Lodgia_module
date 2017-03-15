@@ -22,15 +22,17 @@ void handle_xml()
 
 }
 
-void handle_lightOn()
+void handle_LightOn()
 {
-	lightOn();
+	LightOn();
+	isHardLightOn = true;
 	webServer.send(200, "text/html", "OK");
 }
 
-void handle_lightOff()
+void handle_LightOff()
 {
-	lightOff();
+	LightOff();
+	isHardLightOn = false;
 	webServer.send(200, "text/html", "OK");
 }
 
@@ -38,7 +40,7 @@ void handle_powerOn() {
 	if (!isPowerOn)
 	{
 		Serial.println("Switching On Power");
-		digitalWrite(powerPin, HIGH);
+		//digitalWrite(powerPin, HIGH);
 		isPowerOn = true;
 		powerState = "ON";
 		webServer.send(200, "text/html", "OK");
@@ -49,7 +51,7 @@ void handle_powerOff() {
 	if (isPowerOn)
 	{
 		Serial.println("Switching Off Power");
-		digitalWrite(powerPin, LOW);
+		//digitalWrite(powerPin, LOW);
 		isPowerOn = false;
 		powerState = "Off";
 		webServer.send(200, "text/html", "OK");

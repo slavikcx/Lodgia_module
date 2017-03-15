@@ -2,6 +2,11 @@
 
 void detectMotion() {
 
+	//pirState = digitalRead(pirPin); // checkin for motion detection
+	//Serial.print("Motion - ");
+	//Serial.println(pirState);	
+	//Serial.println(digitalRead(pirPin));
+
 	if (digitalRead(pirPin) != pirState)
 	{
 		pirState = digitalRead(pirPin); // checkin for motion detection
@@ -16,10 +21,10 @@ void getTemperature() {
 	//Serial.println("In GetTemperatre");
 	unsigned long currentMillis = millis();
 
-	if (currentMillis - previousMillis >= THinterval) {
+	if (currentMillis - previousDHTMillis >= THinterval) {
 
 		// save the last time you read the sensor 
-		previousMillis = currentMillis;
+		previousDHTMillis = currentMillis;
 
 		// Get temperature event and print its value.
 		sensors_event_t event;
@@ -52,47 +57,14 @@ void getTemperature() {
 
 void getDistance()
 {
-	//delay(500);
-	Serial.println("Reading distance");
-
-	delay(50);// 50ms delay between measuring. 29ms minimum delay.
-	unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
-	currentdist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
-
-	if (currentdist_cm != 0 && currentdist_cm < 100) //cutting out of range values
-	{
-		dist_cm = currentdist_cm;
-	}
-
-	Serial.print("Distance: ");
-	Serial.print(dist_cm);
-	Serial.println("cm");
-	Serial.println(" ");
-
-	// checking if next distance measure will be <10cm to prevent false LED On
-	if (dist_cm < hardLedTreshold) {
-		
-		Serial.println("dist_cm<10");
-
-		previousDist_cm = dist_cm;
-
-		Serial.println("verifiyng distance again");
-
-		delay(150);// 150ms delay between measuring for excluding incident switch. 29ms minimum delay. 
-		unsigned int uS = usSensor.ping(); // Generation signal and getting time in us(uS). 
-		currentdist_cm = uS / US_ROUNDTRIP_CM; // Converting got time in distance (0 - out of range)
-
-
-		if (currentdist_cm != 0 && currentdist_cm < MAX_DISTANCE)
-		{
+	if (millis() - previousDistanceMillis >= distanceMeasuringPeriod) {
+		currentdist_cm = ultrasonic.distanceRead();
+		if (currentdist_cm != dist_cm && currentdist_cm != 0 && currentdist_cm < 100) {
 			dist_cm = currentdist_cm;
+			Serial.print("Distance:                  ");
+			Serial.print(dist_cm);
+			Serial.println("cm");
 		}
-
-		Serial.print("Distance: ");
-		Serial.print(dist_cm);
-		Serial.println("cm");
-		Serial.print("previousDist_cm: ");
-		Serial.println(previousDist_cm);
 	}
 }
 
@@ -114,11 +86,6 @@ void getExternalData()
 		atmPressure = bmp.readPressure() / 133.33; //need to divide on 133.33 for mmHg
 		Serial.print(atmPressure); 
 		Serial.println(" mmHg");
-
-		//Serial.print("Approx altitude = ");
-		//altitude = bmp.readAltitude(1028.88); // this should be adjusted to your local forcase (for  49°13'20.85"Ñ  28°25'59.14"Â  - 1028.88 - default value -1013.25, for vinnitsa - 980.40)
-		//Serial.print(altitude); 
-		//Serial.println(" m");
 
 		Serial.println();
 		

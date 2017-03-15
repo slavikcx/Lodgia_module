@@ -15,7 +15,27 @@ void bmpInit()
 	if (!bmp.begin(0x76)) {
 		Serial.println("Could not find a valid BMP280 sensor, check wiring!");
 		
+	} else {
+		Serial.println("BMP initialization finished.");
+		Serial.println("");
 	}
+	
+}
+
+void PirInit() 
+{
+	Serial.print("Initializing PIR ");
+
+	pinMode(pirPin, INPUT); //setting PirPin to input
+	digitalWrite(pirPin, LOW); //pirPin is LOW by default
+	for (int i = 0; i < 10; i++)
+	{
+		Serial.print(".");
+		delay(1000);
+	}
+	Serial.println("");
+	Serial.println("Pir initialization finished");
+	Serial.println("");
 }
 
 void WiFiInit()
@@ -82,6 +102,7 @@ void WiFiInit()
 				}
 				if (WiFi.localIP() != defaultIp)
 				{
+					
 					Serial.println("");
 					Serial.println("WiFi connected");
 					Serial.println("IP address: ");
@@ -229,8 +250,8 @@ void webServerInit(void)
 	webServer.on("/xml", handle_xml);//handling xml
 
 
-	webServer.on("/lightOn", handle_lightOn); // light On handling
-	webServer.on("/lightOff", handle_lightOff);// light Off handling
+	webServer.on("/lightOn", handle_LightOn); // light On handling
+	webServer.on("/lightOff", handle_LightOff);// light Off handling
 
 	webServer.on("/powerOn", handle_powerOn); // light On handling
 	webServer.on("/powerOff", handle_powerOff);// light Off handling
@@ -248,7 +269,7 @@ void webServerInit(void)
 void timeInit()
 {
 	Serial.println("Getting current time from net...");
-	timeSync();
+	TimeSync();
 	previousClockMillis = millis();
 	Serial.println("timeInit finieshed");
 

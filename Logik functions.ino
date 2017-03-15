@@ -1,7 +1,7 @@
 //Module logic functions
 
 
-void lightOn()
+void LightOn()
 {
 	if (!isLightOn)
 	{
@@ -17,7 +17,7 @@ void lightOn()
 	}
 }
 
-void lightOff()
+void LightOff()
 {
 	if (isLightOn)
 	{
@@ -32,31 +32,48 @@ void lightOff()
 	}
 }
 
-void lightHardOnOff()
+void LightHardOnOff()
 {
-	if (dist_cm<hardLedTreshold && previousDist_cm<10 && hardledOn == false) {  //Turn On Light
+	if (dist_cm <= hardLedTreshold)
+	{
+		if (HardLightCheckCounter>=3)
+		{
+			//Checking if hard Light ON is need
+			if (isHardLightOn == false && HardLightCheckCounter >= 3) {  //Turn On Light
 
-		Serial.println(" ");
-		Serial.println("Hard Turn ON");
-		lightOn();
-		hardledOn = !hardledOn; // changing hard switch state
-		dist_cm = dist_cm + 60; // adding 60sm to current destance to prevent imidiate hard light Off
+				Serial.println(" ");
+				Serial.println("Hard Turn ON");
+				LightOn();
+				isHardLightOn = !isHardLightOn; // changing hard switch state
+				dist_cm = 60; // adding 60sm to current destance to prevent imidiate hard light Off
+				HardLightCheckCounter = 0;
+			}
+
+			//Checking if hard Light Off is need
+			if (isHardLightOn == true && HardLightCheckCounter >= 3) {  //Turn Off  Light
+
+				Serial.println(" ");
+				Serial.println("Hard Turn OFF");
+				LightOff();
+				isHardLightOn = !isHardLightOn; // changing hard switch state
+				dist_cm = 60; // adding 60sm to current distance to prevent automatic led On just after turning hard Off 
+				HardLightCheckCounter = 0;
+			}
+
+		} else if (millis() - previousHardLightMillis >= 1000) 
+		{
+			previousHardLightMillis = millis();
+			HardLightCheckCounter++;
+
+			Serial.print("HardLightCheckCounter - ");
+			Serial.println(HardLightCheckCounter);
+		}
+		
 	}
-
-	//Checking if hard Light Off is need
-
-	if (dist_cm<hardLedTreshold && previousDist_cm<hardLedTreshold && hardledOn == true) {  //Turn Off  Light
-
-		Serial.println(" ");
-		Serial.println("Hard Turn OFF");
-		lightOff();
-		hardledOn = !hardledOn; // changing hard switch state
-		dist_cm = dist_cm + 60; // adding 60sm to current distance to prevent automatic led On just after turning hard Off 
-	}
-
+	 //HardLightCheckCounter = 0;
 }
 
-void timeSync() {
+void TimeSync() {
 
 	//unsigned long currentTimeMillis = millis();
 
@@ -123,18 +140,18 @@ void Clock()
 	
 	if(currentMillis - previousClockMillis > 1000) //checking if delta between mills more that 1 second or it will be lost 
 	{
-		
+		/*
 		Serial.print("old time - ");
 		Serial.println(dateTime);
 		Serial.println("");
 		Serial.print("substring 16,24 - ");
 		Serial.println(dateTime.substring(16, 24));
-
+*/
 		if (dateTime.substring(19,24) == syncTime) // 19,24 - 01:00 - sync every 1 hour; 16,24 - 01:00:00 - sync every 1 day
 		{
 			Serial.println("Syncing time...");
 		
-			timeSync();
+			TimeSync();
 
 			Serial.print("time after sync - ");
 			Serial.println(dateTime);
@@ -142,32 +159,36 @@ void Clock()
 
 		}else{
 
-			Serial.println("Using internal clock...");
+			//Serial.println("Using internal clock...");
 
-			Serial.print("currentMillis - ");
-			Serial.println(currentMillis);
-			Serial.print("previousClockMillis - ");
-			Serial.println(previousClockMillis);
+			//Serial.print("currentMillis - ");
+			//Serial.println(currentMillis);
+			//Serial.print("previousClockMillis - ");
+			//Serial.println(previousClockMillis);
 
-			int clockDelta = (currentMillis - previousClockMillis)/1000;
+			unsigned long clockDelta = (currentMillis - previousClockMillis)/1000;
+			
 			previousClockMillis = currentMillis;
 
-			Serial.print("clock delta - ");
+			/*Serial.print("clock delta - ");
 			Serial.println(clockDelta);
 
+			Serial.print("previousClockMillis - ");
+			Serial.println(previousClockMillis);
+*/
 			ss = atoi(dateTime.substring(22, 24).c_str());
-			Serial.print("ss - ");
-			Serial.println(ss);
+			//Serial.print("ss - ");
+			//Serial.println(ss);
 			ss = ss	+ clockDelta; //converting string to int and summing with clock delta
-			Serial.print("ss + delta - ");
-			Serial.println(ss);
+			//Serial.print("ss + delta - ");
+			//Serial.println(ss);
 
 
 			if (ss >= 60)
 			{
 				mm = atoi(dateTime.substring(19, 21).c_str()) + ss/60;
-				Serial.print("mm - ");
-				Serial.println(mm);
+				//Serial.print("mm - ");
+				//Serial.println(mm);
 				ss = ss%60;
 			} else {
 				mm = mm = atoi(dateTime.substring(19, 21).c_str());
@@ -176,13 +197,13 @@ void Clock()
 			if (mm >= 60)
 			{
 				hh = atoi(dateTime.substring(16, 18).c_str()) + mm/60;
-				Serial.print("hh - ");
-				Serial.println(hh);
-				mm = hh%60;
+				//Serial.print("hh - ");
+				//Serial.println(hh);
+				mm = mm%60;
 			} else{
 				hh = atoi(dateTime.substring(16, 18).c_str());
 			}
-
+/*
 			Serial.print("calculated time:");
 			Serial.print("ss - ");
 			Serial.println(ss);
@@ -190,15 +211,15 @@ void Clock()
 			Serial.println(mm);
 			Serial.print("hh - ");
 			Serial.println(hh);
-			Serial.print("");
+			Serial.print("");*/
 
-			Serial.print("dateTime before cutting - ");
-			Serial.println(dateTime);
+			//Serial.print("dateTime before cutting - ");
+			//Serial.println(dateTime);
 			// modifying dateTime
 			dateTime = dateTime.substring(0, 16);
 
-			Serial.print("dateTime after cutting (0, 16) - ");
-			Serial.println(dateTime);
+			//Serial.print("dateTime after cutting (0, 16) - ");
+			//Serial.println(dateTime);
 
 			if (hh<10)dateTime += "0";
 			dateTime += (String)hh + ":";
@@ -215,26 +236,26 @@ void Clock()
 
 }
 
-void modulUpTime() {
+void ModulUpTime() {
 	
-	moduleUpTime = convertMillistoTime(millis());
+	moduleUpTime = ConvertMillistoTime(millis());
 }
 
-void getBrightness()
+void GetBrightness()
 {
-	Serial.println("Getting brightness");
+	//Serial.println("Getting brightness");
 	brightness = analogRead(A0);
-	Serial.print("Brightnes - ");
-	Serial.println(brightness);
+	//Serial.print("Brightnes - ");
+	//Serial.println(brightness);
 }
 
-String convertMillistoTime(unsigned long millisValue)
+String ConvertMillistoTime(unsigned long millisValue)
 {
 	String Time = "";
 	unsigned long ss;
 	byte mm, hh, dd;
 	ss = millisValue / 1000; //converting millis to seconds
-	dd = ss / 86400; // geeting days 
+	dd = ss / 86400; // getting days 
 	hh = (ss - dd * 86400) / 3600; // getting hours 
 	mm = (ss - dd * 86400 - hh * 3600) / 60; //getting minutes 
 	ss = ss - dd * 86400 - hh * 3600 - mm * 60; // getting seconds 
@@ -249,16 +270,84 @@ String convertMillistoTime(unsigned long millisValue)
 	return Time;
 }
 
+
+void LightAutoOnOff()
+{
+	// Checking current brightness. if it's high then nno need to check if we need to torn on light
+
+	if (brightness <= brigntnessTreshold)
+	{
+		// checking sensors for turning On light
+		if (dist_cm < distTreshold || pirState == true && isLightOn == false && isHardLightOn == false)
+		{
+			Serial.println("Getting distance and motion again");
+			delay(10); //waiting 10 ms
+			getDistance(); // getting distnce again for excluding false turning on
+			detectMotion(); //checking for motion again for excluding false turning on
+
+			if (dist_cm < distTreshold || pirState == true)
+			{
+				Serial.println("Auto Light Turn ON");
+				LightOn(); //swithcing ON light
+				previousLightCounterMillis = millis();
+			}
+			else 
+			{
+				Serial.println("False light turning ON prevented!");
+			}
+		}
+	}
+
+	// checking if we need to Turn Off light
+	if (isLightOn == true && isHardLightOn == false && lightOnCounter >= offDelay)
+	{
+		Serial.println("Auto Light Turn OFF");
+		LightOff();
+		lightOnCounter = 0;
+	}
+
+	//Counter
+	if (isLightOn == true && isHardLightOn == false) // checking if light is on but not hard ON
+	{
+		//starting counter
+		if (dist_cm > distTreshold && pirState == false) //if NO movement on any sensor - counter continues
+		{
+
+			lightOnCounter = (millis() - previousLightCounterMillis) / 1000;
+
+			Serial.print("Light counter - ");
+			Serial.println(lightOnCounter);
+		}
+		else
+		{
+			//if there was movement on any sensor - resetting counter 
+			previousLightCounterMillis = millis();
+		}
+	}
+
+}
+
+
 void openRolet()
 {
 	if(!isRoletOpen)
 	{
-		for (int i = 0; i < 180; i++)
+		int i = 0;
+
+		do {
+			roletka1.write(180);
+			i++;
+			delay(100);
+		} while (i < 30);
+		
+
+		/*for (int i = 0; i < 180; i++)
 		{
 			roletka1.write(i);
 			delay(5);
 		}
-
+*/
+		digitalWrite(servoPin, LOW);
 		isRoletOpen = true;
 		roletState = "Opened";
 	}
@@ -268,12 +357,21 @@ void closeRolet()
 {
 	if (isRoletOpen)
 	{
-		for (int i = 180; i > 0; i--)
+		int i = 0;
+
+		do {
+			roletka1.write(0);
+			i++;
+			delay(100);
+		} while (i < 30);
+		
+		digitalWrite(servoPin, LOW);
+		/*for (int i = 180; i > 0; i--)
 		{
 			roletka1.write(i);
 			delay(5);
 		}
-
+*/
 		isRoletOpen = false;
 		roletState = "Closed";
 	}
