@@ -38,9 +38,9 @@ String buildWebPage()
 	page += "xmldoc = xmlResponse.getElementsByTagName('outsideTemperature'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('outsideTemperature').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('pressure'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('pressure').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('distance'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('distance').innerHTML = message;";
-	page += "xmldoc = xmlResponse.getElementsByTagName('roletState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('roletState').innerHTML = message;";
+	page += "xmldoc = xmlResponse.getElementsByTagName('blindsState'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('blindsState').innerHTML = message;";
 	page += "xmldoc = xmlResponse.getElementsByTagName('brightness'); message = xmldoc[0].firstChild.nodeValue;  document.getElementById('brightness').innerHTML = message;";
-
+	
 
 	page += "}}";
 
@@ -63,7 +63,7 @@ String buildWebPage()
 
 	page += "<div style='position: relative; height: 250px; width: 1000px'>"; //outside image region position and size
 	page += "<div style='position: absolute; top: 0; left: 0; width: 250px'>";
-	page += "<img src='https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQWgi9bbMS4OA1IzrnlR2C5a3w7HmWrnJ5hBTfSaveZhQHrbFP' style='height: 250px; width: 480px' /></div>"; //external image source and size
+	page += "<img src='http://www.allwomens.ru/uploads/posts/2015-01/1422543212_prognoz-pogody-kakim-budet-leto-2015-v-rossii-0.jpg' style='height: 250px; width: 480px' /></div>"; //external image source and size
 	page += "<div style='position: absolute; top: 4%; left: 7%; width: 300px; font-size:600%; color:Brown; font-weight:bold'><span id='outsideTemperature'></span>oC</div>"; //show insideTemperature
 	page += "<div style='position: absolute; top: 45%; left: 8%; width: 300px; font-size:600%; color:Brown; font-weight:bold'><span id='pressure'></span>mm</div>";//show atmospheric pressure
 	
@@ -76,14 +76,9 @@ String buildWebPage()
 	page += "</div>";
    
 	
-	
-
-
-	//page += "<h2>Temperature: <span id='insideTemperature'> </span></h2>"; //show insideTemperature
-	//page += "<h2>Humidity: <span id='humidity'> </span></h2>"; //show humidity
 	page += "<h2>Light <span id='lightState'> </span></h2>"; //show light state
 
-															 //page += "";
+	//page += "";
 
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;lightOn&quot;);'>Light On</button>";
 	page += "<button class='button blue' onclick='sendButton(&quot;lightOff&quot;);'>Light Off</button> </h1>";
@@ -93,7 +88,7 @@ String buildWebPage()
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;powerOn&quot;);'>Power On</button>";
 	page += "<button class='button red' onclick='sendButton(&quot;powerOff&quot;);'>Power Off</button> </h1>";
 
-	page += "<h2>Blinds <span id='roletState'> </span></h2>"; //show blinds state
+	page += "<h2>Blinds <span id='blindsState'> </span></h2>"; //show blinds state
 
 	page += "<h1> <button class='button green' onclick='sendButton(&quot;blindsOpen&quot;);'>Open</button>";
 	page += "<button class='button blue' onclick='sendButton(&quot;blindsClose&quot;);'>Close</button> </h1>";
@@ -149,9 +144,9 @@ String buildXML()
 	xml += powerState;
 	xml += "</powerState>";
 
-	xml += "<roletState>";
-	xml += roletState;
-	xml += "</roletState>";
+	xml += "<blindsState>";
+	xml += blindsState;
+	xml += "</blindsState>";
 
 	xml += "<pirState>";
 	xml += pirState;
